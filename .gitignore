@@ -1,0 +1,6 @@
+# build files left by pip install
+*.egg-info/
+build/
+dist/
+__pycache__/
+*.pyc
