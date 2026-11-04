@@ -35,8 +35,8 @@ as a PDF (with [reportlab](https://www.reportlab.com/)).
   `<start> - <last>` instead of the address; the top has no address.
 - Blocks: description and a table of their children, linked to the child sections.
 - Memories: description and a table with width and number of entries.
-- Registers: description, a bit drawing (32 bits per row, field boundaries and bit numbers
-  only, no names) and a field table
+- Registers: description, a bit drawing (32 bits per row, field names where they fit
+  at 4 points or more, otherwise left out) and a field table
   (Bits, Name, SW access, HW access, Reset, Description; unused bits as Reserved rows).
 - Every section links up to its parent and back to the table of contents.
 - Hex numbers in capitals; addresses zero-padded to the widest address.

@@ -19,7 +19,8 @@
 # Updated      : 2026-11-03 / DV - links now jump to the right page (pages are no longer held
 #                back); title page with file name, name, desc and generation time, centred;
 #                footer with the modules; start - last address on block headings; links on
-#                the heading line; no field names in the bit drawing
+#                the heading line; field names in the bit drawing only where they fit; numbered headings and
+#                the title page title/name/desc in dark blue
 #--------------------------------------------------------------------------------------------------
 
 import datetime
@@ -42,6 +43,7 @@ from systemrdl.node import AddressableNode, MemNode, RegNode
 PAGE_SIZES = {"letter": letter, "a4": A4}
 MARGIN = 0.75 * inch
 LINK_COLOR = "#1F4E9E"
+HEAD_COLOR = colors.darkblue     # numbered headings, title page title/name/desc
 FONT, BOLD = "Helvetica", "Helvetica-Bold"
 
 # look of every table: thin grid, grey bold header row, small font
@@ -140,8 +142,9 @@ class PdfExporter:
         self.links_style = ParagraphStyle("links", fontName=FONT, fontSize=7, alignment=2)
         self.heads = [ParagraphStyle("h%d" % i, parent=base["Heading%d" % (i + 1)], fontName=BOLD,
                                      fontSize=size, leading=size * 1.25, keepWithNext=1,
-                                     spaceBefore=0, spaceAfter=0)
+                                     spaceBefore=0, spaceAfter=0, textColor=HEAD_COLOR)
                       for i, size in enumerate([16, 13, 11, 10])]
+        contents_style = ParagraphStyle("contents", parent=self.heads[0], textColor=colors.black)
         toc = TableOfContents()
         toc.levelStyles = [ParagraphStyle("toc%d" % i, fontName=FONT, fontSize=9, leading=12,
                                           leftIndent=12 * i, firstLineIndent=0)
@@ -151,23 +154,25 @@ class PdfExporter:
         # text only once), generation time
         lines, shown = [], set()
         if title:
-            lines.append(Paragraph(escape(title), base["Title"]))
+            lines.append(Paragraph(escape(title), ParagraphStyle("title", parent=base["Title"],
+                                                                 textColor=HEAD_COLOR)))
             shown.add(title)
         center = ParagraphStyle("center", parent=self.body, fontSize=12, leading=16,
                                 alignment=1, spaceAfter=8)
-        texts = [os.path.basename(top_node.inst.def_src_ref.path)]
+        blue = ParagraphStyle("center_blue", parent=center, textColor=HEAD_COLOR)
+        lines.append(Paragraph(escape(os.path.basename(top_node.inst.def_src_ref.path)), center))
         for prop in ("name", "desc"):
             text = prop_text(top_node, prop)
             if text and text not in shown:
-                texts.append(text)
+                lines.append(Paragraph(escape(text), blue))
                 shown.add(text)
-        texts.append("Generated: " + datetime.datetime.now().strftime("%Y-%m-%d %H:%M"))
-        lines += [Paragraph(escape(t), center) for t in texts]
+        lines.append(Paragraph("Generated: " + datetime.datetime.now().strftime("%Y-%m-%d %H:%M"),
+                               center))
         block = sum(p.wrap(doc.width, doc.height)[1] + p.style.spaceBefore + p.style.spaceAfter
                     for p in lines)
         self.story = [Spacer(1, max((doc.height - block) / 2 - 12, 0))] + lines + [PageBreak()]
 
-        self.story += [Paragraph('<a name="toc"/>Contents', self.heads[0]), toc, PageBreak()]
+        self.story += [Paragraph('<a name="toc"/>Contents', contents_style), toc, PageBreak()]
         self.section(top_node, "1", None, 0)
         doc.multiBuild(self.story, canvasmaker=TotalCanvas)
 
@@ -254,8 +259,9 @@ class PdfExporter:
 
     def reg_drawing(self, reg):
         """Bit layout: rows of 32 bits (highest row on top), one box per field, bit numbers
-        above the box edges, unused bits grey. No field names in the boxes (they do not fit
-        narrow fields); the names are in the field table below."""
+        above the box edges, unused bits grey. Each field box shows the field name, in the
+        largest font from 7 down to 4 points that fits; a name that does not fit even at 4
+        points is left out (it is in the field table below)."""
         regwidth = reg.get_property("regwidth")
         bit_w, box_h, label_h = self.width / 32, 16, 9
         row_h = box_h + label_h + 4
@@ -275,6 +281,13 @@ class PdfExporter:
                 if lo != hi:
                     drawing.add(String(x + w - 1, y + box_h + 2, str(lo), fontName=FONT,
                                        fontSize=6, textAnchor="end"))
+                if field:
+                    size = 7.0
+                    while stringWidth(field.inst_name, FONT, size) > w - 2 and size > 4:
+                        size -= 0.5
+                    if stringWidth(field.inst_name, FONT, size) <= w - 2:
+                        drawing.add(String(x + w / 2, y + 5, field.inst_name, fontName=FONT,
+                                           fontSize=size, textAnchor="middle"))
         return drawing
 
     def field_table(self, reg):
