@@ -23,12 +23,15 @@ description = "PeakRDL exporter: register map documentation as a PDF"
 readme = "README.md"
 license = {text = "Apache-2.0 OR MIT"}
 authors = [{name = "DV"}]
-requires-python = ">=3.7"
+requires-python = ">=3.8"     # importlib.metadata
 dependencies = [
     "systemrdl-compiler",
     "peakrdl-cli",
     "reportlab==5.1.0",     # pinned: the recorded version
 ]
+
+[project.urls]
+Repository = "https://github.com/wolfy-42/peakrdl-pdflight"
 
 [project.entry-points."peakrdl.exporters"]
 pdflight = "peakrdl_pdflight.__peakrdl__:Exporter"
