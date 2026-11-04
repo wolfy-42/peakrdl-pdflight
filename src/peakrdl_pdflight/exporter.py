@@ -21,6 +21,8 @@
 #                footer with the modules; start - last address on block headings; links on
 #                the heading line; field names in the bit drawing only where they fit; numbered headings and
 #                the title page title/name/desc in dark blue
+#                2026-11-03 / DV - 0.1.1: every block (addrmap/regfile below the top) starts on a
+#                new page; table of contents entries in dark blue
 #--------------------------------------------------------------------------------------------------
 
 import datetime
@@ -43,7 +45,7 @@ from systemrdl.node import AddressableNode, MemNode, RegNode
 PAGE_SIZES = {"letter": letter, "a4": A4}
 MARGIN = 0.75 * inch
 LINK_COLOR = "#1F4E9E"
-HEAD_COLOR = colors.darkblue     # numbered headings, title page title/name/desc
+HEAD_COLOR = colors.darkblue     # numbered headings and TOC entries, title page title/name/desc
 FONT, BOLD = "Helvetica", "Helvetica-Bold"
 
 # look of every table: thin grid, grey bold header row, small font
@@ -147,7 +149,8 @@ class PdfExporter:
         contents_style = ParagraphStyle("contents", parent=self.heads[0], textColor=colors.black)
         toc = TableOfContents()
         toc.levelStyles = [ParagraphStyle("toc%d" % i, fontName=FONT, fontSize=9, leading=12,
-                                          leftIndent=12 * i, firstLineIndent=0)
+                                          leftIndent=12 * i, firstLineIndent=0,
+                                          textColor=HEAD_COLOR)
                            for i in range(8)]
 
         # title page, centred on the page: title, top rdl file name, top name and desc (each
@@ -224,7 +227,10 @@ class PdfExporter:
             self.story.append(KeepTogether(flow))
             return
 
-        # addrmap / regfile: table of the children, each linked to its own section
+        # addrmap / regfile: starts on a new page (except the top, which follows the contents);
+        # then a table of the children, each linked to its own section
+        if level > 0:
+            self.story.append(PageBreak())
         children = [c for c in node.children(unroll=True) if isinstance(c, AddressableNode)]
         rows = [["Address", "Identifier", "Size", "Description"]]
         for i, child in enumerate(children, 1):

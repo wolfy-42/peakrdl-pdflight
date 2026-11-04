@@ -39,6 +39,8 @@ as a PDF (with [reportlab](https://www.reportlab.com/)).
   at 4 points or more, otherwise left out) and a field table
   (Bits, Name, SW access, HW access, Reset, Description; unused bits as Reserved rows).
 - Every section links up to its parent and back to the table of contents.
+- Every block below the top starts on a new page; numbered headings and table of contents
+  entries are dark blue.
 - Hex numbers in capitals; addresses zero-padded to the widest address.
 
 ## Repository
